@@ -27,7 +27,7 @@ REM ****************************************************************************
 REM * répertoire dans lequel est installé NSIS                                    *
 REM *******************************************************************************
 
-set nsis_directory=C:\\projet\\VS\\orionbanque\\Make_Setup_OrionBanque\\nsis
+set nsis_directory=C:\\projet\\VS\\Make_Setup_OrionBanque\\nsis
 
 REM *******************************************************************************
 REM * répertoire dans lequel l'image utilisée pour l'installeur est installée     *
