@@ -1,11 +1,12 @@
 ;NSIS Modern User Interface
 ;Installation OrionBanque
-;Written by GG 0.01 with NSIS Open Source Compiler version 3.03
+;Written by GG 0.02 with NSIS Open Source Compiler version 3.03
 ; 0.01 [31-10-18] GG - Première version 
-
+; 0.02 [11-01-19] GG - Ajout optionnel du raccourci vers le bureau via une CheckBox à cocher
 ;--------------------------------
 ;Include Modern ui
 !include "MUI2.nsh"
+
 SetCompressor /SOLID lzma
 
 !define PRODUCT_NAME "OrionBanque"
@@ -21,7 +22,7 @@ SetCompressor /SOLID lzma
 !define MUI_ICON "orion_icone"
 !define MUI_UNICON "ico_uninstall"
 
-!define WELCOME_TITLE "Bienvenue dans le programme d'installation de ${PRODUCT_NAME} ${PRODUCT_VERSION}"
+!define WELCOME_TITLE "Bienvenue dans l'installation de ${PRODUCT_NAME} ${PRODUCT_VERSION}"
  
 !define UNWELCOME_TITLE 'Welcome to the extra 3 lines test uninstall wizard. \
 This page has extra space for the UN-welcome title!'
@@ -32,14 +33,40 @@ This page has extra space for the UN-welcome title!'
 This page has extra space for the UN-finish title!'
  
 !define MUI_WELCOMEPAGE_TITLE "${WELCOME_TITLE}"
-!define MUI_WELCOMEPAGE_TITLE_3LINES
 !define MUI_FINISHPAGE_TITLE "${FINISH_TITLE}"
 !define MUI_FINISHPAGE_TITLE_3LINES
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW CheckBoxShortcut
  
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; Directory page
 !insertmacro MUI_PAGE_DIRECTORY
+
+Var mycheckbox ; Statut de la coche de création du raccourci sur le bureau
+var click ; Flag de l'état coché : 1 ou non coché : 0
+
+Function CheckBoxShortcut
+${NSD_CreateCheckbox} 120u -18u 50% 12u "Créer un raccourci sur le bureau"
+Pop $mycheckbox
+${NSD_Check} $mycheckbox ; Check it by default
+intop $click 1 + 0   ; Coché par défaut
+
+SetCtlColors $mycheckbox "" ${MUI_BGCOLOR} ; Couleur du fond idem à celui par défaut
+GetFunctionAddress $0 OnCheckbox ; Lorsque l'on clique on appelle la fonction OnCheckBox
+nsDialogs::OnClick $mycheckbox $0
+nsDialogs::Show
+FunctionEnd
+
+Function OnClick
+	Pop $0 # HWND
+	MessageBox MB_OK clicky
+FunctionEnd
+
+Function OnCheckbox ; Fonction appelée par le clic
+	Pop $0 # HWND
+	intop $click 1 - $click ; Si coché (1), on décoche (0) et inversement
+FunctionEnd
+
 ; Instfiles page
 !insertmacro MUI_PAGE_INSTFILES
 ; Finish page
@@ -62,14 +89,13 @@ InstallDir "$PROGRAMFILES\OrionBanque"
 ShowInstDetails show
 ShowUnInstDetails show
 
-BrandingText "NSIS 3.03 / © OrionBanque - Cyril Charlier"
-;VIAddVersionKey /LANG=${LANG_FRENCH} "Nom du produit" "${PRODUCT_NAME}"
+BrandingText "NSIS 3.04 / © OrionBanque - Cyril Charlier"
 VIAddVersionKey /LANG=${LANG_FRENCH} "ProductName" "OrionBanque"
 VIAddVersionKey /LANG=${LANG_FRENCH} "ProductVersion" "orion_version"
 VIAddVersionKey /LANG=${LANG_FRENCH} "Comments" "OrionBanque est un produit de Cyril Charlier"
 VIAddVersionKey /LANG=${LANG_FRENCH} "CompanyName" "Cyril Charlier"
 VIAddVersionKey /LANG=${LANG_FRENCH} "LegalCopyright" "© OrionBanque"
-VIAddVersionKey /LANG=${LANG_FRENCH} "Copyright" "© OrionBanque 2018"
+VIAddVersionKey /LANG=${LANG_FRENCH} "Copyright" "© OrionBanque 2019"
 VIAddVersionKey /LANG=${LANG_FRENCH} "FileDescription" "${PRODUCT_NAME}"
 VIAddVersionKey /LANG=${LANG_FRENCH} "FileVersion" "orion_version"
 VIProductVersion "orion_version"
@@ -81,7 +107,9 @@ Section "SectionPrincipale" SEC01
   File /r orion_directory\*.*
   CreateDirectory "$SMPROGRAMS\OrionBanque"
   CreateShortCut "$SMPROGRAMS\OrionBanque\OrionBanque.lnk" "$INSTDIR\orionbanque.exe"
+	intcmp $click 0 noshortcut ; Si la
   CreateShortCut "$DESKTOP\OrionBanque.lnk" "$INSTDIR\orionbanque.exe"
+  noshortcut:
 SectionEnd
 
 Section -AdditionalIcons

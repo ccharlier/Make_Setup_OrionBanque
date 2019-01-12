@@ -199,6 +199,11 @@ Version History
 - Update check switched from JNetLib to WinInet
 - New file type icons
 
+2.3.4
+- Added Window Info/Spy feature
+- System DPI aware
+- New toolbar images
+
 
 Copyright Information
 ---------------------

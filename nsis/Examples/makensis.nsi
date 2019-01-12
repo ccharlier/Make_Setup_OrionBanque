@@ -48,6 +48,7 @@ RequestExecutionLevel admin
 !include "LogicLib.nsh"
 !include "Memento.nsh"
 !include "WordFunc.nsh"
+!include "Util.nsh"
 
 ;--------------------------------
 ;Definitions
@@ -165,10 +166,15 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
   File ..\COPYING
   File ..\NSIS.chm
   !pragma verifychm "..\NSIS.chm"
-  File ..\NSIS.exe
-  !if /FileExists "..\NSIS.exe.manifest"
-    File "..\NSIS.exe.manifest"
+  !if /FileExists "..\NSIS.exe"
+    !if /FileExists "..\NSIS.exe.manifest"
+      File "..\NSIS.exe.manifest"
+    !endif
+  !else
+    !define NO_NSISMENU_HTML 1
+    !makensis '-v2 "NSISMenu.nsi" "-XOutFile ..\NSIS.exe"' = 0
   !endif
+  File ..\NSIS.exe
 
   SetOutPath $INSTDIR\Bin
   File ..\Bin\makensis.exe
@@ -226,12 +232,14 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
   SetOutPath $INSTDIR\Docs\makensisw
   File ..\Docs\makensisw\*.txt
 
-  SetOutPath $INSTDIR\Menu
-  File ..\Menu\*.html
-  SetOutPath $INSTDIR\Menu\images
-  File ..\Menu\images\header.gif
-  File ..\Menu\images\line.gif
-  File ..\Menu\images\site.gif
+  !ifndef NO_NSISMENU_HTML
+    SetOutPath $INSTDIR\Menu
+    File ..\Menu\*.html
+    SetOutPath $INSTDIR\Menu\images
+    File ..\Menu\images\header.gif
+    File ..\Menu\images\line.gif
+    File ..\Menu\images\site.gif
+  !endif
 
   Delete $INSTDIR\makensis.htm
   Delete $INSTDIR\Docs\*.html
@@ -239,7 +247,6 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
   RMDir $INSTDIR\Docs
 
   SetOutPath $INSTDIR\Bin
-  File ..\Bin\LibraryLocal.exe
   !if ${BITS} >= 64
     File /NonFatal  ..\Bin\RegTool-x86.bin
     File            ..\Bin\RegTool-amd64.bin
@@ -329,6 +336,7 @@ ${MementoSection} "Script Examples" SecExample
   File ..\Examples\WordFuncTest.nsi
   File ..\Examples\Memento.nsi
   File ..\Examples\unicode.nsi
+  File ..\Examples\NSISMenu.nsi
 
   SetOutPath $INSTDIR\Examples\Plugin
   File ..\Examples\Plugin\exdll.c
@@ -832,18 +840,22 @@ Section -post
 !endif
 
   WriteRegExpandStr HKLM "${REG_UNINST_KEY}" "UninstallString" '"$INSTDIR\uninst-nsis.exe"'
+  ;WriteRegStr HKLM "${REG_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninst-nsis.exe" /S' ; Ideally WACK would use this
   WriteRegExpandStr HKLM "${REG_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayName" "Nullsoft Install System${NAMESUFFIX}"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\uninst-nsis.exe,0"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayVersion" "${VERSION}"
 !ifdef VER_MAJOR & VER_MINOR & VER_REVISION & VER_BUILD
-  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMajor" "${VER_MAJOR}"
-  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMinor" "${VER_MINOR}"
+  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMajor" "${VER_MAJOR}" ; Required by WACK
+  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMinor" "${VER_MINOR}" ; Required by WACK
 !endif
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "Publisher" "Nullsoft and Contributors" ; Required by WACK
   WriteRegStr HKLM "${REG_UNINST_KEY}" "URLInfoAbout" "http://nsis.sourceforge.net/"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "HelpLink" "http://nsis.sourceforge.net/Support"
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoModify" "1"
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoRepair" "1"
+  ${MakeARPInstallDate} $1
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallDate" $1
 
   WriteUninstaller $INSTDIR\uninst-nsis.exe
 
